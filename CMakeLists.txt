@@ -141,12 +141,12 @@ set(imgui_INCLUDE_DIRS
 #   set(CMAKE_CUDA_ARCHITECTURES 86)
 # endif()
 
-add_library(SOIL STATIC
-    SOIL/image_DXT.c
-    SOIL/image_helper.c
-    SOIL/SOIL.c
-    SOIL/stb_image_aug.c
-)
+# add_library(SOIL STATIC
+#     SOIL/image_DXT.c
+#     SOIL/image_helper.c
+#     SOIL/SOIL.c
+#     SOIL/stb_image_aug.c
+# )
 
 #lab1
 add_executable(
@@ -168,6 +168,11 @@ target_include_directories(
     porownanie_1_exec PRIVATE
     ${imgui_INCLUDE_DIRS}
 
+)
+
+#lab3
+add_executable(
+    zad2_exec "zad2.cpp"
 )
 
 # set_target_properties( exec PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
