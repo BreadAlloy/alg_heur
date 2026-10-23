@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5.0) # Bo to mam
 project(AlgorytmyHeurystyczne LANGUAGES CXX C)
 # C dla SOIL
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if (MSVC)
@@ -167,13 +167,28 @@ target_link_libraries(
 target_include_directories(
     porownanie_1_exec PRIVATE
     ${imgui_INCLUDE_DIRS}
-
 )
 
 #lab3
 add_executable(
     zad2_exec "zad2.cpp"
 )
+
+#lab4
+add_executable(
+    porownanie_2_exec "porownanie_algorytmow_z_zad2.cpp"
+)
+
+target_link_libraries(
+  porownanie_2_exec PRIVATE
+  implot implot3d
+)
+
+target_include_directories(
+    porownanie_2_exec PRIVATE
+    ${imgui_INCLUDE_DIRS}
+)
+
 
 # set_target_properties( exec PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
