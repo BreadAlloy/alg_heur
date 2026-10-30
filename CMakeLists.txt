@@ -189,6 +189,11 @@ target_include_directories(
     ${imgui_INCLUDE_DIRS}
 )
 
+#lab3
+add_executable(
+    zad3_exec "zad3.cpp"
+)
+
 
 # set_target_properties( exec PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
