@@ -90,8 +90,7 @@ dystans_t dystans_objechania(idxy_nastepnych& nastepni){
 struct opt_2{
     idxy_kolejnosci start;
 
-    int_t i = 0;
-    int_t j = 0;
+    int_t i[2] = {0, 0};
 
     opt_2(idxy_kolejnosci& start)
     :start(start) {}
@@ -103,14 +102,14 @@ struct opt_2{
         // zamien z powrotem
         pozamieniaj(rezultat);
 
-        j++;
-        if(j >= liczba_punktow){
-            j = 0;
-            i++;
-        }
-        if(i >= liczba_punktow){
-            i = 0;
-            return true;
+        for(int_t k = 1; k < 2; k--){
+            i[k]++;
+            if(i[k] >= liczba_punktow){
+                if(k == 0) return true;
+                i[k] = 0;
+            } else {
+                break;
+            }
         }
 
         pozamieniaj(rezultat);
@@ -123,23 +122,23 @@ struct opt_2{
         // j != i, j + 1 != i, i + 1 != j
 
         int_t temp;
-        if(j > i){
-            int_t ile_obrocic = j - i;
+        if(i[1] > i[0]){
+            int_t ile_obrocic = i[1] - i[0];
             ile_obrocic = (ile_obrocic >> 1) + 1;
             for(int_t w = 0; w < ile_obrocic; w++){
-                int_t w0 = i + 1 + w;
-                int_t w1 = j - w;
+                int_t w0 = i[0] + 1 + w;
+                int_t w1 = i[1] - w;
 
                 temp = permutacja[w0];
                 permutacja[w0] = permutacja[w1];
                 permutacja[w1] = temp;
             }
         } else {
-            int_t ile_obrocic = i - j;
+            int_t ile_obrocic = i[0] - i[1];
             ile_obrocic = (ile_obrocic >> 1) + 1;
             for(int_t w = 0; w < ile_obrocic; w++){
-                int_t w0 = i + 1 + w;
-                int_t w1 = j - w;
+                int_t w0 = i[0] + 1 + w;
+                int_t w1 = i[1] - w;
 
                 if(w0 >= liczba_punktow) w0 -= liczba_punktow;
                 if(w1 >= liczba_punktow) w1 += liczba_punktow;
@@ -155,9 +154,7 @@ struct opt_2{
 struct opt_3{
     idxy_nastepnych start;
 
-    int_t i = 0;
-    int_t j = 0;
-    int_t k = 0;
+    int_t i[3] = {0, 0, 0};
 
     opt_3(idxy_nastepnych& start)
     :start(start) {}
@@ -170,26 +167,20 @@ struct opt_3{
         pozamieniaj<false>(rezultat);
 
         while(true){
-            k++;
-            if(k >= liczba_punktow){
-                j++;
-                k = 0;
-            }
-            if(j >= liczba_punktow){
-                i++;
-                j = 0;
-            }
-            if(i >= liczba_punktow){
-                i = 0;
-                return true;
+            for(int_t k = 2; k < 3; k--){
+                i[k]++;
+                if(i[k] >= liczba_punktow){
+                    if(k == 0) return true;
+                    i[k] = 0;
+                } else {
+                    break;
+                }
             }
 
             int_t counter = 0;
             int_t biezacy = 0;
             for(int_t w = 0; w < liczba_punktow; w++){
-                if((counter == 2) && (k == biezacy)) counter++;
-                if((counter == 1) && (j == biezacy)) counter++;
-                if((counter == 0) && (i == biezacy)) counter++;
+                if(i[counter] == biezacy) counter++;
                 biezacy = rezultat[biezacy];
             }
             assert(biezacy == 0);
@@ -207,15 +198,15 @@ struct opt_3{
         int_t temp;
 
         if constexpr(!przod_tyl){
-            temp = permutacja[k];
-            permutacja[k] = permutacja[j];
-            permutacja[j] = permutacja[i];
-            permutacja[i] = temp;
+            temp = permutacja[i[2]];
+            permutacja[i[2]] = permutacja[i[1]];
+            permutacja[i[1]] = permutacja[i[0]];
+            permutacja[i[0]] = temp;
         } else {
-            temp = permutacja[k];
-            permutacja[k] = permutacja[i];
-            permutacja[i] = permutacja[j];
-            permutacja[j] = temp;
+            temp = permutacja[i[2]];
+            permutacja[i[2]] = permutacja[i[0]];
+            permutacja[i[0]] = permutacja[i[1]];
+            permutacja[i[1]] = temp;
         }
     }
 };
