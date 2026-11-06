@@ -105,8 +105,8 @@ struct opt_2{
         for(int_t k = 1; k < 2; k--){
             i[k]++;
             if(i[k] >= liczba_punktow){
-                if(k == 0) return true;
                 i[k] = 0;
+                if(k == 0) return true;
             } else {
                 break;
             }
@@ -170,8 +170,8 @@ struct opt_3{
             for(int_t k = 2; k < 3; k--){
                 i[k]++;
                 if(i[k] >= liczba_punktow){
-                    if(k == 0) return true;
                     i[k] = 0;
+                    if(k == 0) return true;
                 } else {
                     break;
                 }
