@@ -194,6 +194,10 @@ add_executable(
     zad3_exec "zad3.cpp"
 )
 
+#lab4
+add_executable(
+    zad4_exec "zad4.cpp"
+)
 
 # set_target_properties( exec PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
