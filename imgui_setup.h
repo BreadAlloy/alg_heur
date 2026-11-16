@@ -12,8 +12,9 @@
 #include "imgui_impl_opengl3.h"
 
 #include "implot.h"
-
+#include "imgui_dodatki/implot_dodatki.h"
 #include "implot3d.h"
+#include "imgui_dodatki/implot3d_dodatki.h"
 
 #pragma warning(push, 0)
 

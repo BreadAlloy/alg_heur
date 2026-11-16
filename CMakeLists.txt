@@ -71,15 +71,6 @@ FetchContent_Declare(
     GIT_PROGRESS TRUE
 )
 
-# To by wypadalo wykonac tylko raz przy pobraniu
-message("Adding to imconfig.h")
-file(APPEND ${imgui_SOURCE_DIR}/imconfig.h
-"
-#undef ImDrawIdx
-// opcja 1 fixa z readme implot
-#define ImDrawIdx unsigned int"
-)
-
 FetchContent_MakeAvailable(implot)
 set(IMPLOT_SOURCE
     ${implot_SOURCE_DIR}/implot.cpp
@@ -87,6 +78,32 @@ set(IMPLOT_SOURCE
     ${implot_SOURCE_DIR}/implot_items.cpp
 )
 
+if(NOT DEFINED ADDING_TO_IMCONFIG)
+    message("Adding to imconfig.h")
+    file(APPEND ${imgui_SOURCE_DIR}/imconfig.h
+"
+#undef ImDrawIdx
+// opcja 1 fixa z readme implot
+#define ImDrawIdx unsigned int
+"
+    )
+
+    option(ADDING_TO_IMCONFIG "State flag for adding to imconfig.h" FALSE)
+endif()
+
+if(NOT DEFINED ADDING_TO_IMPLOT_ITEMS)
+    message("Adding to implot_items.cpp")
+    file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/imgui_dodatki/implot_dodatki.cpp ${implot_SOURCE_DIR}/implot_dodatki.cpp)
+    file(APPEND ${implot_SOURCE_DIR}/implot_items.cpp
+"
+#ifndef IMGUI_DISABLE
+#include \"implot_dodatki.cpp\"
+#endif // #ifndef IMGUI_DISABLE
+"
+    )
+
+    option(ADDING_TO_IMPLOT_ITEMS "State flag for adding to implot_items.cpp" FALSE)
+endif()
 
 add_library(implot STATIC ${IMPLOT_SOURCE})
 target_include_directories(implot PUBLIC ${implot_SOURCE_DIR})
@@ -107,6 +124,20 @@ set(IMPLOT3D_SOURCE
     ${implot3d_SOURCE_DIR}/implot3d_items.cpp
     ${implot3d_SOURCE_DIR}/implot3d_meshes.cpp
 )
+
+if(NOT DEFINED ADDING_TO_IMPLOT3D_ITEMS)
+    message("Adding to implot3d_items.cpp")
+    file(CREATE_LINK ${CMAKE_CURRENT_SOURCE_DIR}/imgui_dodatki/implot3d_dodatki.cpp ${implot3d_SOURCE_DIR}/implot3d_dodatki.cpp)
+    file(APPEND ${implot3d_SOURCE_DIR}/implot3d_items.cpp
+"
+#ifndef IMGUI_DISABLE
+#include \"implot3d_dodatki.cpp\"
+#endif // #ifndef IMGUI_DISABLE
+"
+    )
+
+    option(ADDING_TO_IMPLOT3D_ITEMS "State flag for adding to implot3d_items.cpp" FALSE)
+endif()
 
 add_library(implot3d STATIC ${IMPLOT3D_SOURCE})
 target_include_directories(implot3d PUBLIC ${implot3d_SOURCE_DIR})
@@ -197,6 +228,20 @@ add_executable(
 #lab4
 add_executable(
     zad4_exec "zad4.cpp"
+)
+
+add_executable(
+    porownanie_4_exec "porownanie_algorytmow_z_zad4.cpp"
+)
+
+target_link_libraries(
+  porownanie_4_exec PRIVATE
+  implot implot3d
+)
+
+target_include_directories(
+    porownanie_4_exec PRIVATE
+    ${imgui_INCLUDE_DIRS}
 )
 
 # set_target_properties( exec PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
