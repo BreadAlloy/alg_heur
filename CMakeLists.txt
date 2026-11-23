@@ -244,6 +244,10 @@ target_include_directories(
     ${imgui_INCLUDE_DIRS}
 )
 
+add_executable(
+    porownanie_TSP_v2 "porownanie_algorytmow_TSP_v2.cpp"
+)
+
 # set_target_properties( exec PROPERTIES CUDA_SEPARABLE_COMPILATION ON )
 
 # target_link_libraries(
