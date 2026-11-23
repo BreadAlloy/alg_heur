@@ -24,7 +24,7 @@ int main(){
     idxy_kolejnosci start_kolejnosc;
     std::mt19937_64 losowosc(14112026);
     start_kolejnosc.random(algorytmy.liczba_punktow, losowosc);
-
+    #if 0
     {
         idxy_kolejnosci res = algorytmy.LOCAL_SEARCH_OPT_2_FIRST(start_kolejnosc);
         printf("2-opt-first. %f\n", algorytmy.dystans_objechania(res));
@@ -42,6 +42,12 @@ int main(){
     }
     {    
         idxy_nastepnych res = algorytmy.LOCAL_SEARCH_OPT_3_BEST(start_kolejnosc);
+        printf("3-opt-best. %f\n", algorytmy.dystans_objechania(res));
+        res.printf_przebyte(); printf("\n");
+    }
+    #endif
+    {    
+        idxy_nastepnych res = algorytmy.SIMULATED_ANNEALING_RANDOM_OPT_3(start_kolejnosc);
         printf("3-opt-best. %f\n", algorytmy.dystans_objechania(res));
         res.printf_przebyte(); printf("\n");
     }

@@ -10,6 +10,8 @@
 #include <inttypes.h>
 #include <limits>
 
+std::mt19937_64 los_eng(23112026);
+
 typedef float fp_t; 
 typedef fp_t dystans_t;
 typedef uint32_t int_t;
@@ -168,23 +170,20 @@ struct idxy_kolejnosci : std::vector<int_t>{
 };
 
 struct opt_2{
-    idxy_kolejnosci start;
+    typedef idxy_kolejnosci used_permutation_t;
 
     int_t i[2] = {0, 0};
 
-    opt_2(idxy_kolejnosci& start)
-    :start(start) {}
-
     bool nastepny(idxy_kolejnosci& rezultat){
         // zwraca czy już obejrzał wszystko
-        assert(rezultat.size() == start.size());
+        int_t liczba_punktow = int_t(rezultat.size());
 
         // zamien z powrotem
         pozamieniaj(rezultat);
 
         for(int_t k = 1; k < 2; k--){
             i[k]++;
-            if(i[k] >= liczba_punktow()){
+            if(i[k] >= liczba_punktow){
                 i[k] = 0;
                 if(k == 0) return true;
             } else {
@@ -201,6 +200,7 @@ struct opt_2{
     void pozamieniaj(idxy_kolejnosci& permutacja){
         // j != i, j + 1 != i, i + 1 != j
 
+        int_t liczba_punktow = int_t(permutacja.size());
         int_t temp;
         if(i[1] > i[0]){
             int_t ile_obrocic = i[1] - i[0];
@@ -220,8 +220,8 @@ struct opt_2{
                 int_t w0 = i[0] + 1 + w;
                 int_t w1 = i[1] - w;
 
-                if(w0 >= liczba_punktow()) w0 -= liczba_punktow();
-                if(w1 >= liczba_punktow()) w1 += liczba_punktow();
+                if(w0 >= liczba_punktow) w0 -= liczba_punktow;
+                if(w1 >= liczba_punktow) w1 += liczba_punktow;
 
                 temp = permutacja[w0];
                 permutacja[w0] = permutacja[w1];
@@ -229,23 +229,16 @@ struct opt_2{
             }
         }
     }
-
-    int_t liczba_punktow(){
-        return start.size();
-    }
 };
 
 struct opt_3{
-    idxy_nastepnych start;
+    typedef idxy_nastepnych used_permutation_t;
 
     int_t i[3] = {0, 0, 0};
 
-    opt_3(idxy_nastepnych& start)
-    :start(start) {}
-
     bool nastepny(idxy_nastepnych& rezultat){
         // zwraca czy już obejrzał wszystko
-        assert(rezultat.size() == start.size());
+        int_t liczba_punktow = int_t(rezultat.size());
 
         // zamien z powrotem
         pozamieniaj<false>(rezultat);
@@ -253,7 +246,7 @@ struct opt_3{
         while(true){
             for(int_t k = 2; k < 3; k--){
                 i[k]++;
-                if(i[k] >= liczba_punktow()){
+                if(i[k] >= liczba_punktow){
                     i[k] = 0;
                     if(k == 0) return true;
                 } else {
@@ -263,7 +256,7 @@ struct opt_3{
 
             int_t counter = 0;
             int_t biezacy = 0;
-            for(int_t w = 0; w < liczba_punktow(); w++){
+            for(int_t w = 0; w < liczba_punktow; w++){
                 if(i[counter] == biezacy) counter++;
                 biezacy = rezultat[biezacy];
             }
@@ -293,14 +286,166 @@ struct opt_3{
             permutacja[i[1]] = temp;
         }
     }
+};
 
-    int_t liczba_punktow(){
-        return start.size();
+struct opt_3_random : private opt_3{
+    typedef opt_3::used_permutation_t used_permutation_t;
+    using opt_3::pozamieniaj;
+
+    bool nastepny(idxy_nastepnych& rezultat){
+        // nigdy wszystkiego nie obejrzy
+        int_t liczba_punktow = int_t(rezultat.size());
+        std::uniform_int_distribution<int_t> los_idx(0, liczba_punktow - 1);
+
+        // zamien z powrotem
+        pozamieniaj<false>(rezultat);
+
+        while(true){
+            i[0] = los_idx(los_eng);
+            i[1] = los_idx(los_eng);
+            i[2] = los_idx(los_eng);
+
+            int_t counter = 0;
+            int_t biezacy = 0;
+            for(int_t w = 0; w < liczba_punktow; w++){
+                if(i[counter] == biezacy) counter++;
+                biezacy = rezultat[biezacy];
+            }
+            assert(biezacy == 0);
+
+            if(counter == 3) break;
+        }
+        pozamieniaj<true>(rezultat);
+        
+        return false;
     }
 };
 
-static constexpr int_t best_fit_flag = 0;
-static constexpr int_t first_fit_flag = 1;
+template<typename permutacja_t>
+struct spacerowicz_ogolny_t{
+    permutacja_t jest_tu;
+    dystans_t koszt_jest;
+
+    permutacja_t chce_isc;
+    dystans_t koszt_chcianego;
+
+    spacerowicz_ogolny_t(permutacja_t& start, dystans_t dystans_start)
+    : jest_tu(start), koszt_jest(dystans_start), chce_isc(start), koszt_chcianego(dystans_start)
+    {}
+
+    bool obejrz(permutacja_t& ogladana, dystans_t koszt_ogladanego){
+        // zwraca czy już się zdecydował
+
+        if(koszt_ogladanego < koszt_chcianego){
+            chce_isc = ogladana;
+            koszt_chcianego = koszt_ogladanego;
+        }
+
+        return kiedy_isc();
+    }
+
+    // decyzja o zakonczeniu algorytmu
+    virtual bool czy_kontynuowac_spacer() = 0;
+
+    void idz(){
+        jest_tu = chce_isc;
+        koszt_jest = koszt_chcianego;
+        gdy_idzie();
+    }
+    virtual void gdy_idzie() = 0;
+    virtual bool kiedy_isc() = 0;
+    virtual permutacja_t najlepsze() = 0;
+};
+
+template<typename permutacja_t>
+struct spacerowicz_first_fit_t : public spacerowicz_ogolny_t<permutacja_t>{
+    using spacerowicz_t = spacerowicz_ogolny_t<permutacja_t>;
+    using spacerowicz_t::spacerowicz_t;
+
+    bool czy_kontynuowac_spacer() final {
+        return spacerowicz_t::koszt_jest > spacerowicz_t::koszt_chcianego;
+    }
+
+    bool kiedy_isc() final {
+        return spacerowicz_t::koszt_jest > spacerowicz_t::koszt_chcianego;
+    }
+
+    void gdy_idzie() final {}
+
+    permutacja_t najlepsze() override {
+        return spacerowicz_t::jest_tu;
+    }
+};
+
+template<typename permutacja_t>
+struct spacerowicz_best_fit_t : public spacerowicz_ogolny_t<permutacja_t>{
+    using spacerowicz_t = spacerowicz_ogolny_t<permutacja_t>;
+    using spacerowicz_t::spacerowicz_t;
+
+    bool czy_kontynuowac_spacer() final {
+        return spacerowicz_t::koszt_jest > spacerowicz_t::koszt_chcianego;
+    }
+
+    bool kiedy_isc() final {
+        return false;
+    }
+
+    void gdy_idzie() final {}
+
+    permutacja_t najlepsze() override {
+        return spacerowicz_t::jest_tu;
+    }
+};
+
+template<typename permutacja_t>
+struct spacerowicz_wyzarzacz_t : public spacerowicz_ogolny_t<permutacja_t>{
+    using spacerowicz_t = spacerowicz_ogolny_t<permutacja_t>;
+
+    permutacja_t najlepsze_odwiedzone;
+    dystans_t koszt_najlepszego;
+
+    spacerowicz_wyzarzacz_t(permutacja_t& start, dystans_t dystans_start)
+    : spacerowicz_t(start, dystans_start)
+    , najlepsze_odwiedzone(start), koszt_najlepszego(dystans_start)
+    {}
+
+    fp_t energia = 1.0f;
+    static constexpr fp_t stala_chlodzenia = 0.7f;
+    static constexpr fp_t energia_docelowa = 0.1f;
+    std::uniform_real_distribution<fp_t> los_P = std::uniform_real_distribution<fp_t>(0.0f, 1.0f);
+
+    bool czy_kontynuowac_spacer() final {
+        energia *= stala_chlodzenia;
+        return energia > energia_docelowa;
+    }
+
+    bool kiedy_isc() final {
+        if(spacerowicz_t::koszt_jest > spacerowicz_t::koszt_chcianego){
+            return true;
+        } else {
+            // spacerowicz_t::koszt_jest <= spacerowicz_t::koszt_chcianego
+            dystans_t diff = (spacerowicz_t::koszt_jest - spacerowicz_t::koszt_chcianego);
+            // diff < 0
+
+            if(std::exp(diff/stala_chlodzenia) > los_P(los_eng)){
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    void gdy_idzie() final {
+        if(spacerowicz_t::koszt_jest < koszt_najlepszego){
+            koszt_najlepszego = spacerowicz_t::koszt_jest;
+            najlepsze_odwiedzone = spacerowicz_t::jest_tu;
+        }
+    }
+
+    permutacja_t najlepsze() override {
+        return najlepsze_odwiedzone;
+    }
+};
 
 template<typename przestrzen_t>
 struct algorytmy_t : przestrzen_t {
@@ -329,69 +474,22 @@ struct algorytmy_t : przestrzen_t {
         return suma;
     }
 
-    template<typename permutacja_t, 
-    // dystans_t(dystans_objechania)(permutacja_t&),
-     int_t kiedy_isc>
-    struct spacerowicz_t{
-        permutacja_t jest_tu;
-        dystans_t koszt_jest;
-
-        permutacja_t chce_isc;
-        dystans_t koszt_chcianego;
-
-        spacerowicz_t(permutacja_t& start, dystans_t dystans_start)
-        : jest_tu(start), koszt_jest(dystans_start), chce_isc(start), koszt_chcianego(dystans_start)
-        {}
-
-        bool obejrz(permutacja_t& ogladana, dystans_t koszt_ogladanego){
-            // zwraca czy już się zdecydował
-
-            if(koszt_ogladanego < koszt_chcianego){
-                chce_isc = ogladana;
-                koszt_chcianego = koszt_ogladanego;
-            }
-
-            return kiedy_konczyc();
-        }
-
-        bool czy_jest_powod_isc(){
-            return koszt_jest > koszt_chcianego;
-        }
-
-        void idz(){
-            jest_tu = chce_isc;
-            koszt_jest = koszt_chcianego;
-        }
-
-        bool kiedy_konczyc(){
-            if constexpr(kiedy_isc == first_fit_flag) return idz_na_pierwszym_lepszym();
-            if constexpr(kiedy_isc == best_fit_flag) return wiecznie_niezdecydowany();
-        }
-
-        bool idz_na_pierwszym_lepszym(){
-            return koszt_jest > koszt_chcianego;
-        }
-        
-        bool wiecznie_niezdecydowany(){
-            return false;
-        }
-    };
-
-    template<typename permutacja_t, typename pokazywacz_sasiedztwa_t, int_t kiedy_isc>
-    permutacja_t przeszukiwanie_lokalne(permutacja_t start){
-        spacerowicz_t<permutacja_t, kiedy_isc> spacerowicz(start, dystans_objechania(start));
+    template<typename pokazywacz_sasiedztwa_t, typename spacerowicz_t>
+    pokazywacz_sasiedztwa_t::used_permutation_t przeszukiwanie_lokalne(pokazywacz_sasiedztwa_t::used_permutation_t start){
+        using permutacja_t = pokazywacz_sasiedztwa_t::used_permutation_t;
+        spacerowicz_t spacerowicz(start, dystans_objechania(start));
 
         while(true){
             permutacja_t pokazywana(spacerowicz.jest_tu);
 
-            pokazywacz_sasiedztwa_t pokazywacz(spacerowicz.jest_tu);
+            pokazywacz_sasiedztwa_t pokazywacz;
             pokazywacz.template pozamieniaj<true>(pokazywana);
 
             while(!pokazywacz.nastepny(pokazywana)){
                 if(spacerowicz.obejrz(pokazywana, dystans_objechania(pokazywana))) break;
             }
 
-            if(spacerowicz.czy_jest_powod_isc()){
+            if(spacerowicz.czy_kontynuowac_spacer()){
                 spacerowicz.idz();
             } else {
                 break;
@@ -403,11 +501,11 @@ struct algorytmy_t : przestrzen_t {
 
 };
 
-
-#define LOCAL_SEARCH_OPT_2_FIRST przeszukiwanie_lokalne<idxy_kolejnosci, opt_2, first_fit_flag>
-#define LOCAL_SEARCH_OPT_2_BEST przeszukiwanie_lokalne<idxy_kolejnosci, opt_2, best_fit_flag>
-#define LOCAL_SEARCH_OPT_3_FIRST przeszukiwanie_lokalne<idxy_nastepnych, opt_3, first_fit_flag>
-#define LOCAL_SEARCH_OPT_3_BEST przeszukiwanie_lokalne<idxy_nastepnych, opt_3, best_fit_flag>
+#define LOCAL_SEARCH_OPT_2_FIRST przeszukiwanie_lokalne<opt_2, spacerowicz_first_fit_t<opt_2::used_permutation_t>>
+#define LOCAL_SEARCH_OPT_2_BEST przeszukiwanie_lokalne<opt_2, spacerowicz_best_fit_t<opt_2::used_permutation_t>>
+#define LOCAL_SEARCH_OPT_3_FIRST przeszukiwanie_lokalne<opt_3, spacerowicz_first_fit_t<opt_3::used_permutation_t>>
+#define LOCAL_SEARCH_OPT_3_BEST przeszukiwanie_lokalne<opt_3, spacerowicz_best_fit_t<opt_3::used_permutation_t>>
+#define SIMULATED_ANNEALING_RANDOM_OPT_3 przeszukiwanie_lokalne<opt_3_random, spacerowicz_wyzarzacz_t<opt_3_random::used_permutation_t>>
 
 
 
