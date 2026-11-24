@@ -6,7 +6,7 @@
 #include "zad4_algorytmy.h"
 #include "wczytaj_TSP.h"
 
-constexpr bool skip_liczenie = false;
+constexpr bool skip_liczenie = true;
 
 constexpr int_t ile_algorytmow = 5;
 constexpr std::string_view algorytmy[ile_algorytmow] = {
@@ -90,9 +90,9 @@ struct miara_t{
     }
 };
 
-constexpr int_t ile_startow = 2;
-
-constexpr int_t ktory_algorytm_liczony = 4;
+constexpr int_t ile_startow = 10;
+constexpr bool nie_pomijaj = false;
+constexpr int_t ktory_algorytm_liczony = 3;
 static_assert(ktory_algorytm_liczony < ile_algorytmow);
 
 int main(){
@@ -142,7 +142,7 @@ int main(){
 
         {
         miara_t& miara = miary[ktory_algorytm_liczony][i][s];
-        if(miara.czas < 0.0f){
+        if((miara.czas < 0.0f) || nie_pomijaj){
 
             printf("Performing: instancja: %s, start: %d, algorytm: %s\n", instancja.nazwa.data(), s, algorytmy[ktory_algorytm_liczony].data());
             dystans_t rezultat;
@@ -178,7 +178,7 @@ int main(){
             assert(miara.instancja_idx == i);
             assert(miara.start_idx == s);
             assert(miara.alg_idx == ktory_algorytm_liczony);
-            printf("Skipping: instancja: %s, start: %d, algorytm: %s\n", instancja.nazwa.data(), s, algorytmy[0].data());
+            printf("Skipping: instancja: %s, start: %d, algorytm: %s\n", instancja.nazwa.data(), s, algorytmy[ktory_algorytm_liczony].data());
         }
             printf("\n");
         }

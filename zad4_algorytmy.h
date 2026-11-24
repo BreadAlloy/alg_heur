@@ -352,6 +352,11 @@ struct spacerowicz_ogolny_t{
         koszt_jest = koszt_chcianego;
         gdy_idzie();
     }
+
+    int_t liczba_punktow(){
+        return jest_tu.size();
+    }
+
     virtual void gdy_idzie() = 0;
     virtual bool kiedy_isc() = 0;
     virtual permutacja_t najlepsze() = 0;
@@ -404,14 +409,25 @@ struct spacerowicz_wyzarzacz_t : public spacerowicz_ogolny_t<permutacja_t>{
     permutacja_t najlepsze_odwiedzone;
     dystans_t koszt_najlepszego;
 
+    static constexpr fp_t podobienstwo_do_local_search = 0.0000001f;
+    static constexpr fp_t stala_bladzenia = 16000.0f;
+
     spacerowicz_wyzarzacz_t(permutacja_t& start, dystans_t dystans_start)
     : spacerowicz_t(start, dystans_start)
     , najlepsze_odwiedzone(start), koszt_najlepszego(dystans_start)
-    {}
+    {
+        energia = std::sqrt(3.0f * (spacerowicz_t::koszt_jest / fp_t(spacerowicz_t::liczba_punktow())));
+        energia_docelowa = std::sqrt(podobienstwo_do_local_search);
+        assert(energia_docelowa < energia);
 
-    fp_t energia = 1.0f;
-    static constexpr fp_t stala_chlodzenia = 0.7f;
-    static constexpr fp_t energia_docelowa = 0.1f;
+        fp_t liczba_krokow = fp_t(spacerowicz_t::liczba_punktow() / 2) * stala_bladzenia;
+        stala_chlodzenia = std::pow(energia_docelowa/energia, 1.0/liczba_krokow);
+    }
+
+    fp_t energia;
+    fp_t stala_chlodzenia;
+    fp_t energia_docelowa;
+
     std::uniform_real_distribution<fp_t> los_P = std::uniform_real_distribution<fp_t>(0.0f, 1.0f);
 
     bool czy_kontynuowac_spacer() final {
